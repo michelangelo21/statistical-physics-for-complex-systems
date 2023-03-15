@@ -44,10 +44,29 @@ function random_walk(N)
     return currpos
 end
 
-history = random_walk_history(K)
-plot(history[1, :], history[2, :], label=:none)
-plot!([0], [0], seriestype=:scatter, markersize=3, markerstrokewidth=0, color=:red, label="Start")
-title!("Random Walk for K=$(K) steps")
+# histories = [random_walk_history(n) for n in Ns_history]
+# plot!([0], [0], seriestype=:scatter, markersize=3, markerstrokewidth=0, color=:green, label="Start (0, 0)")
+# plot!([history[1, end]], [history[2, end]], seriestype=:scatter, markersize=3, markerstrokewidth=0, color=:red, label="End")
+
+
+Ns_history = (100, 1000, 10_000)
+plts = []
+histories = [random_walk_history(n) for n in Ns_history]
+
+for i in 1:length(Ns_history)
+    n = Ns_history[i]
+    history = histories[i]
+    plt = plot(history[1, :], history[2, :], label=:none, aspect_ratio=:equal, linewidth=0.5)
+    title!("N=$(n) steps")
+    push!(plts, plt)
+end
+
+plot(plts..., layout=(1, length(Ns_history)), size=(1200, 400))
+lim = maximum(abs, histories[end]) + 5
+xlims!(-lim, lim)
+ylims!(-lim, lim)
+# savefig("random_walk_histories_samelim.png")
+
 
 function last_distance(N)
     x, y = random_walk(N)
