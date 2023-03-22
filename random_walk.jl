@@ -76,8 +76,12 @@ end
 K = 10_000
 R̄(N, K) = mean(last_distance(N) for _ in 1:K)
 
-Ns = 10:10:1000
-Rs = [R̄(n, K) for n in Ns]
+Ns = range(1, 10000, length=100)
+Ns = 1000:100:10_000
+@time Rs = [R̄(n, K) for n in Ns]
+@time last_distance(100_000)
+@time R̄(100_000, K)
+
 
 
 # @. model(x, p) = p[1] * x
@@ -87,8 +91,10 @@ fit = curve_fit(model, Ns, Rs .^ 2, p0)
 a, b = coef(fit)
 
 scatter(Ns, Rs .^ 2, label=:none, markersize=2)
-plot!(Ns, model(Ns, fit.param), label="Fit: a=$a, b=$b", linewidth=2)
+plot!(Ns, model(Ns, fit.param), label="Fit: a=$a, b=$b", linewidth=2, legend=:topleft)
 xlabel!("N")
 ylabel!("<R²>")
+title!("Mean square distance from origin after N steps")
+
 
 
