@@ -2,7 +2,9 @@ using Random
 using Plots
 using Statistics
 using LsqFit
+using Measurements
 
+Random.seed!(42)
 N = 10_000
 
 function step(pos)
@@ -50,22 +52,21 @@ end
 
 
 Ns_history = (100, 1000, 10_000)
-plts = []
 histories = [random_walk_history(n) for n in Ns_history]
 
-for i in 1:length(Ns_history)
+plts = map(1:length(Ns_history)) do i
     n = Ns_history[i]
     history = histories[i]
     plt = plot(history[1, :], history[2, :], label=:none, aspect_ratio=:equal, linewidth=0.5)
     title!("N=$(n) steps")
-    push!(plts, plt)
+    return plt
 end
 
-plot(plts..., layout=(1, length(Ns_history)), size=(1200, 400))
-lim = maximum(abs, histories[end]) + 5
-xlims!(-lim, lim)
-ylims!(-lim, lim)
-# savefig("random_walk_histories_samelim.png")
+plot(plts..., layout=(1, length(Ns_history)), size=(1200, 400), dpi=600)
+# lim = maximum(abs, histories[end]) + 5
+# xlims!(-lim, lim)
+# ylims!(-lim, lim)
+savefig("random_walk_histories.png")
 
 
 function last_distance(N)
@@ -76,25 +77,23 @@ end
 K = 10_000
 R̄(N, K) = mean(last_distance(N) for _ in 1:K)
 
-Ns = range(1, 10000, length=100)
-Ns = 1000:100:10_000
+Ns = vcat([100:100:900, 1000:1000:9000, 10_000:10_000:90_000, 100_000:100_000:1_000_000]...)
 @time Rs = [R̄(n, K) for n in Ns]
-@time last_distance(100_000)
-@time R̄(100_000, K)
-
+# @time last_distance(100_000)
+# @time R̄(1000_000, K)
 
 
 # @. model(x, p) = p[1] * x
 @. model(x, p) = p[1] * x + p[2]
 p0 = [1.0, 1.0]
 fit = curve_fit(model, Ns, Rs .^ 2, p0)
-a, b = coef(fit)
+# a, b = coef(fit)
+a, b = coef(fit) .± stderror(fit)
 
-scatter(Ns, Rs .^ 2, label=:none, markersize=2)
-plot!(Ns, model(Ns, fit.param), label="Fit: a=$a, b=$b", linewidth=2, legend=:topleft)
+scatter(Ns, Rs .^ 2, label="Squared mean over K=10 000 repetitions", markersize=2, dpi=600)
+plot!(Ns, model(Ns, fit.param), label="Fit: a=$a,  b=$b", linewidth=2, legend=:topleft)
 xlabel!("N")
-ylabel!("<R²>")
-title!("Mean square distance from origin after N steps")
-
-
+ylabel!("<R>²")
+title!("Squared mean distance from origin after N steps")
+savefig("random_walk_squared_mean_distance.png")
 
